@@ -1,95 +1,79 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="hr">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zebra Print Pro</title>
+    <script src="https://browserprint.zebra.com/browserprint/v2/BrowserPrint.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f0f2f5; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #1c1e21; text-align: center; margin-bottom: 20px; }
+        label { font-size: 14px; font-weight: bold; color: #4b4b4b; }
+        input { width: 100%; padding: 12px; margin: 8px 0 18px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 16px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); background: #0056b3; }
+        .status { text-align: center; font-size: 12px; margin-top: 10px; color: #888; }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="hr"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Zebra Print Pro&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://browserprint.zebra.com/browserprint/v2/BrowserPrint.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>body { font-family: -apple-system, sans-serif; padding: 20px; background: #f0f2f5; display: flex; justify-content: center; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>h2 { color: #1c1e21; text-align: center; margin-bottom: 20px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>label { font-size: 14px; font-weight: bold; color: #4b4b4b; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>input { width: 100%; padding: 12px; margin: 8px 0 18px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>button { width: 100%; padding: 16px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>button:active { transform: scale(0.98); background: #0056b3; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.status { text-align: center; font-size: 12px; margin-top: 10px; color: #888; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;div class="card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Printer (4cm)&lt;/h2&gt;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label&gt;Ime Broda:&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input type="text" id="ime" value="CATALEYA"&gt;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label&gt;Vrijedi do (Datum):&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input type="text" id="datum" value="01.06.2026"&gt;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label&gt;Ukupna Cijena (EUR):&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input type="number" id="cijena" value="36.00" step="0.01"&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label&gt;Link za QR kod:&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input type="text" id="qrLink" placeholder="Zalijepi link ovdje..."&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button onclick="printaj()"&gt;ISPRINTAJ RAČUN&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="status" class="status"&gt;Provjera printera...&lt;/div&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function printaj() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const ime = document.getElementById('ime').value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const datum = document.getElementById('datum').value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const ukupno = parseFloat(document.getElementById('cijena').value);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const qr = document.getElementById('qrLink').value || "https://porezna.hr";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Izračun poreza</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const osnovica = (ukupno / 1.25).toFixed(2);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const pdv = (ukupno - osnovica).toFixed(2);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// ZPL kod prilagođen tvojoj slici</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let zpl = `^XA^CI28^PW320^LL750</p>
-<p class="p1">^CF0,16^FO30,30^FDGRADSKO PODUZECE d.o.o.^FS</p>
-<p class="p1">^FO30,55^FDObala J.I.Cote 10^FS</p>
-<p class="p1">^FO30,80^FDOIB:17036495780^FS</p>
-<p class="p1">^CF0,24^FO30,130^FDRacun broj:^FS^FO30,160^FD151/TIJASNICA/1^FS</p>
-<p class="p1">^CF0,20^FO30,210^FDZA:^FS^CF0,35^FO90,240^FD${ime}^FS</p>
-<p class="p1">^CF0,20^FO30,300^FDBROD DO 12M^FS^FO30,325^FDVRIJEDI DO:^FS</p>
-<p class="p1">^CF0,30^FO150,350^FD12:00:00^FS^FO120,385^FD${datum}^FS</p>
-<p class="p1">^FO30,430^GB260,2,2^FS</p>
-<p class="p1">^CF0,22^FO30,455^FDUKUPNO^FS^FO160,455^FD${ukupno.toFixed(2)} EUR^FS</p>
-<p class="p1">^CF0,16^FO30,485^FDOSNOVICA^FS^FO210,485^FD${osnovica}^FS</p>
-<p class="p1">^FO30,505^FDPDV (25,00%)^FS^FO210,505^FD${pdv}^FS</p>
-<p class="p1">^FO30,535^FDNACIN PLACANJA: NOVCANICE^FS</p>
-<p class="p1">^CF0,12^FO30,565^FDZKI:^FS^FO30,578^FD4af7ef4e6a02dc9ad714711ac46e1218^FS</p>
-<p class="p1">^FO30,598^FDJIR:^FS^FO30,611^FDdc3d8239-35c0-46a7-9388-ec4580d9e6ad^FS</p>
-<p class="p1">^FO100,640^BQN,2,3^FDQA,${qr}^FS^XZ`;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>BrowserPrint.getDefaultDevice("printer", function(device) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (device) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>device.send(zpl, () =&gt; alert("Račun isprintan!"), (err) =&gt; alert("Greška: " + err));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>alert("Printer nije pronađen. Pokreni Zebra Browser Print!");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+<div class="card">
+    <h2>Printer (4cm)</h2>
+    
+    <label>Ime Broda:</label>
+    <input type="text" id="ime" value="CATALEYA">
+    
+    <label>Vrijedi do (Datum):</label>
+    <input type="text" id="datum" value="01.06.2026">
+    
+    <label>Ukupna Cijena (EUR):</label>
+    <input type="number" id="cijena" value="36.00" step="0.01">
+
+    <label>Link za QR kod:</label>
+    <input type="text" id="qrLink" placeholder="Zalijepi link ovdje...">
+
+    <button onclick="printaj()">ISPRINTAJ RAČUN</button>
+    <div id="status" class="status">Provjera printera...</div>
+</div>
+
+<script>
+    function printaj() {
+        const ime = document.getElementById('ime').value;
+        const datum = document.getElementById('datum').value;
+        const ukupno = parseFloat(document.getElementById('cijena').value);
+        const qr = document.getElementById('qrLink').value || "https://porezna.hr";
+
+        // Izračun poreza
+        const osnovica = (ukupno / 1.25).toFixed(2);
+        const pdv = (ukupno - osnovica).toFixed(2);
+
+        // ZPL kod prilagođen tvojoj slici
+        let zpl = `^XA^CI28^PW320^LL750
+^CF0,16^FO30,30^FDGRADSKO PODUZECE d.o.o.^FS
+^FO30,55^FDObala J.I.Cote 10^FS
+^FO30,80^FDOIB:17036495780^FS
+^CF0,24^FO30,130^FDRacun broj:^FS^FO30,160^FD151/TIJASNICA/1^FS
+^CF0,20^FO30,210^FDZA:^FS^CF0,35^FO90,240^FD${ime}^FS
+^CF0,20^FO30,300^FDBROD DO 12M^FS^FO30,325^FDVRIJEDI DO:^FS
+^CF0,30^FO150,350^FD12:00:00^FS^FO120,385^FD${datum}^FS
+^FO30,430^GB260,2,2^FS
+^CF0,22^FO30,455^FDUKUPNO^FS^FO160,455^FD${ukupno.toFixed(2)} EUR^FS
+^CF0,16^FO30,485^FDOSNOVICA^FS^FO210,485^FD${osnovica}^FS
+^FO30,505^FDPDV (25,00%)^FS^FO210,505^FD${pdv}^FS
+^FO30,535^FDNACIN PLACANJA: NOVCANICE^FS
+^CF0,12^FO30,565^FDZKI:^FS^FO30,578^FD4af7ef4e6a02dc9ad714711ac46e1218^FS
+^FO30,598^FDJIR:^FS^FO30,611^FDdc3d8239-35c0-46a7-9388-ec4580d9e6ad^FS
+^FO100,640^BQN,2,3^FDQA,${qr}^FS^XZ`;
+
+        BrowserPrint.getDefaultDevice("printer", function(device) {
+            if (device) {
+                device.send(zpl, () => alert("Račun isprintan!"), (err) => alert("Greška: " + err));
+            } else {
+                alert("Printer nije pronađen. Pokreni Zebra Browser Print!");
+            }
+        });
+    }
+</script>
 </body>
 </html>
