@@ -52,10 +52,18 @@ button {
 <input id="zki" placeholder="ZKI">
 <input id="jir" placeholder="JIR">
 <input id="qr" placeholder="QR link">
-
+<label style="display:flex;align-items:center;margin-top:10px;">
+<input type="checkbox" id="useNewQR" checked style="margin-right:10px;">
+  Unesi novi QR / ZKI / JIR
+</label>
 <button onclick="generateZPL()">Generiraj ZPL</button>
 
 </div>
+  <label style="display:flex;align-items:center;margin-top:10px;">
+  <input type="checkbox" id="nightTicket" style="margin-right:10px;">
+  Noćna karta
+</label>
+  <input id="sati" placeholder="Broj sati (npr 3)">
 <script>
 function formatDateTime() {
   const now = new Date();
@@ -73,22 +81,64 @@ function formatDateTime() {
   return `${day}.${month}.${year}. ${hours}:${minutes}:${seconds} 1.tiskanje`;
 }
 
-function generateZPL() {
-  const data = {
-    ime: document.getElementById("ime_broda").value,
-    vrijeme: document.getElementById("vrijeme").value,
-    datum: document.getElementById("datum").value,
-    ukupno: document.getElementById("ukupno").value,
-    osnovica: document.getElementById("osnovica").value,
-    pdv: document.getElementById("pdv").value,
-    zki: document.getElementById("zki").value,
-    jir: document.getElementById("jir").value,
-    qr: document.getElementById("qr").value
-  };
+function calculatePDV(total) {
+  const ukupno = parseFloat(total.replace(",", "."));
+  if (isNaN(ukupno)) return { osnovica: "0,00", pdv: "0,00" };
 
+  const osnovica = ukupno / 1.25;
+  const pdv = ukupno - osnovica;
+
+  return {
+    osnovica: osnovica.toFixed(2).replace(".", ","),
+    pdv: pdv.toFixed(2).replace(".", ",")
+  };
+}
+
+function getVrijediDo() {
+  const isNight = document.getElementById("nightTicket").checked;
+  const now = new Date();
+
+  let target = new Date();
+
+  if (isNight) {
+    // sutra u 12:00
+    target.setDate(now.getDate() + 1);
+    target.setHours(12, 0, 0);
+  } else {
+    const sati = parseInt(document.getElementById("sati").value || "0");
+    target = new Date(now.getTime() + sati * 60 * 60 * 1000);
+  }
+
+  const pad = (n) => n.toString().padStart(2, "0");
+
+  const vrijeme = `${pad(target.getHours())}:${pad(target.getMinutes())}:${pad(target.getSeconds())}`;
+  const datum = `${pad(target.getDate())}.${pad(target.getMonth() + 1)}.${target.getFullYear()}.`;
+
+  return { vrijeme, datum };
+}
+
+function formatDateTime() {
+  const now = new Date();
+  const pad = (n) => n.toString().padStart(2, "0");
+
+  return `${pad(now.getDate())}.${pad(now.getMonth()+1)}.${now.getFullYear()}. ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} 1.tiskanje`;
+}
+
+function generateZPLString() {
+  const useNew = document.getElementById("useNewQR").checked;
+
+  const zki = getStoredOrNew("zki", "last_zki", useNew);
+  const jir = getStoredOrNew("jir", "last_jir", useNew);
+  const qr = getStoredOrNew("qr", "last_qr", useNew);
+
+  const ime = document.getElementById("ime_broda").value;
+  const ukupno = document.getElementById("ukupno").value;
+
+  const { osnovica, pdv } = calculatePDV(ukupno);
+  const { vrijeme, datum } = getVrijediDo();
   const datumIspisa = formatDateTime();
 
-  const zpl = `
+  return `
 ^XA
 ^PW480
 ^LL2000
@@ -107,7 +157,7 @@ function generateZPL() {
 ^FO20,175^FDZA:^FS
 
 ^CF0,42
-^FO20,200^FD${data.ime}^FS
+^FO20,200^FD${ime}^FS
 
 ^CF0,20
 ^FO20,250^FDBROD DO 12M^FS
@@ -115,23 +165,23 @@ function generateZPL() {
 ^FO20,275^FDVRIJEDI DO:^FS
 
 ^CF0,28
-^FO20,300^FD${data.vrijeme}^FS
-^FO20,330^FD${data.datum}^FS
+^FO20,300^FD${vrijeme}^FS
+^FO20,330^FD${datum}^FS
 
 ^FO20,370^GB440,1,1^FS
 
 ^CF0,24
 ^FO20,390^FDUKUPNO^FS
-^FO330,390^FD${data.ukupno} EUR^FS
+^FO330,390^FD${ukupno} EUR^FS
 
 ^FO20,415^GB440,1,1^FS
 
 ^CF0,20
 ^FO20,440^FDOSNOVICA^FS
-^FO350,440^FD${data.osnovica}^FS
+^FO350,440^FD${osnovica}^FS
 
 ^FO20,465^FDPDV (25%)^FS
-^FO350,465^FD${data.pdv}^FS
+^FO350,465^FD${pdv}^FS
 
 ^FO20,500^FDNAČIN PLAĆANJA: NOVČANICE^FS
 
@@ -139,17 +189,17 @@ function generateZPL() {
 ^FO20,565^FD${datumIspisa}^FS
 
 ^FO20,600^FDZKI:^FS
-^FO20,625^FD${data.zki}^FS
+^FO20,625^FD${zki}^FS
 
 ^FO20,660^FDJIR:^FS
-^FO20,685^FD${data.jir}^FS
+^FO20,685^FD${jir}^FS
 
 ^FO140,740^BQN,2,5
-^FDLA,${data.qr}^FS
+^FDLA,${qr}^FS
 
 ^XZ
 `;
-
+}
   const blob = new Blob([zpl], { type: "text/plain" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
