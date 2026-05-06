@@ -1,79 +1,162 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zebra Print Pro</title>
-    <script src="https://browserprint.zebra.com/browserprint/v2/BrowserPrint.js"></script>
-    <style>
-        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f0f2f5; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { color: #1c1e21; text-align: center; margin-bottom: 20px; }
-        label { font-size: 14px; font-weight: bold; color: #4b4b4b; }
-        input { width: 100%; padding: 12px; margin: 8px 0 18px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 16px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.98); background: #0056b3; }
-        .status { text-align: center; font-size: 12px; margin-top: 10px; color: #888; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zebra ZPL Generator</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #f5f5f5;
+}
+.container {
+  max-width: 400px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  font-size: 16px;
+}
+button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="card">
-    <h2>Printer (4cm)</h2>
-    
-    <label>Ime Broda:</label>
-    <input type="text" id="ime" value="CATALEYA">
-    
-    <label>Vrijedi do (Datum):</label>
-    <input type="text" id="datum" value="01.06.2026">
-    
-    <label>Ukupna Cijena (EUR):</label>
-    <input type="number" id="cijena" value="36.00" step="0.01">
+<div class="container">
+<h2>Zebra račun</h2>
 
-    <label>Link za QR kod:</label>
-    <input type="text" id="qrLink" placeholder="Zalijepi link ovdje...">
+<input id="ime_broda" placeholder="Ime broda">
+<input id="vrijeme" placeholder="Vrijeme (npr 12:00:00)">
+<input id="datum" placeholder="Datum (npr 01.06.2025)">
+<input id="ukupno" placeholder="Ukupno (npr 36,00)">
+<input id="osnovica" placeholder="Osnovica">
+<input id="pdv" placeholder="PDV">
+<input id="datum_ispisa" placeholder="Datum i vrijeme ispisa">
+<input id="zki" placeholder="ZKI">
+<input id="jir" placeholder="JIR">
+<input id="qr" placeholder="QR link">
 
-    <button onclick="printaj()">ISPRINTAJ RAČUN</button>
-    <div id="status" class="status">Provjera printera...</div>
+<button onclick="generateZPL()">Generiraj ZPL</button>
+
 </div>
-
 <script>
-    function printaj() {
-        const ime = document.getElementById('ime').value;
-        const datum = document.getElementById('datum').value;
-        const ukupno = parseFloat(document.getElementById('cijena').value);
-        const qr = document.getElementById('qrLink').value || "https://porezna.hr";
+function formatDateTime() {
+  const now = new Date();
 
-        // Izračun poreza
-        const osnovica = (ukupno / 1.25).toFixed(2);
-        const pdv = (ukupno - osnovica).toFixed(2);
+  const pad = (n) => n.toString().padStart(2, '0');
 
-        // ZPL kod prilagođen tvojoj slici
-        let zpl = `^XA^CI28^PW320^LL750
-^CF0,16^FO30,30^FDGRADSKO PODUZECE d.o.o.^FS
-^FO30,55^FDObala J.I.Cote 10^FS
-^FO30,80^FDOIB:17036495780^FS
-^CF0,24^FO30,130^FDRacun broj:^FS^FO30,160^FD151/TIJASNICA/1^FS
-^CF0,20^FO30,210^FDZA:^FS^CF0,35^FO90,240^FD${ime}^FS
-^CF0,20^FO30,300^FDBROD DO 12M^FS^FO30,325^FDVRIJEDI DO:^FS
-^CF0,30^FO150,350^FD12:00:00^FS^FO120,385^FD${datum}^FS
-^FO30,430^GB260,2,2^FS
-^CF0,22^FO30,455^FDUKUPNO^FS^FO160,455^FD${ukupno.toFixed(2)} EUR^FS
-^CF0,16^FO30,485^FDOSNOVICA^FS^FO210,485^FD${osnovica}^FS
-^FO30,505^FDPDV (25,00%)^FS^FO210,505^FD${pdv}^FS
-^FO30,535^FDNACIN PLACANJA: NOVCANICE^FS
-^CF0,12^FO30,565^FDZKI:^FS^FO30,578^FD4af7ef4e6a02dc9ad714711ac46e1218^FS
-^FO30,598^FDJIR:^FS^FO30,611^FDdc3d8239-35c0-46a7-9388-ec4580d9e6ad^FS
-^FO100,640^BQN,2,3^FDQA,${qr}^FS^XZ`;
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
 
-        BrowserPrint.getDefaultDevice("printer", function(device) {
-            if (device) {
-                device.send(zpl, () => alert("Račun isprintan!"), (err) => alert("Greška: " + err));
-            } else {
-                alert("Printer nije pronađen. Pokreni Zebra Browser Print!");
-            }
-        });
-    }
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  return `${day}.${month}.${year}. ${hours}:${minutes}:${seconds} 1.tiskanje`;
+}
+
+function generateZPL() {
+  const data = {
+    ime: document.getElementById("ime_broda").value,
+    vrijeme: document.getElementById("vrijeme").value,
+    datum: document.getElementById("datum").value,
+    ukupno: document.getElementById("ukupno").value,
+    osnovica: document.getElementById("osnovica").value,
+    pdv: document.getElementById("pdv").value,
+    zki: document.getElementById("zki").value,
+    jir: document.getElementById("jir").value,
+    qr: document.getElementById("qr").value
+  };
+
+  const datumIspisa = formatDateTime();
+
+  const zpl = `
+^XA
+^PW480
+^LL2000
+^CI28
+
+^CF0,20
+^FO20,20^FDGRADSKO PODUZECE d.o.o.^FS
+^FO20,42^FDObala J.I.Cote 10^FS
+^FO20,64^FDOIB:17036495780^FS
+
+^FO20,110^FDRAČUN BROJ:^FS
+^CF0,22
+^FO20,132^FD151/TIJASNICA/1^FS
+
+^CF0,20
+^FO20,175^FDZA:^FS
+
+^CF0,42
+^FO20,200^FD${data.ime}^FS
+
+^CF0,20
+^FO20,250^FDBROD DO 12M^FS
+
+^FO20,275^FDVRIJEDI DO:^FS
+
+^CF0,28
+^FO20,300^FD${data.vrijeme}^FS
+^FO20,330^FD${data.datum}^FS
+
+^FO20,370^GB440,1,1^FS
+
+^CF0,24
+^FO20,390^FDUKUPNO^FS
+^FO330,390^FD${data.ukupno} EUR^FS
+
+^FO20,415^GB440,1,1^FS
+
+^CF0,20
+^FO20,440^FDOSNOVICA^FS
+^FO350,440^FD${data.osnovica}^FS
+
+^FO20,465^FDPDV (25%)^FS
+^FO350,465^FD${data.pdv}^FS
+
+^FO20,500^FDNAČIN PLAĆANJA: NOVČANICE^FS
+
+^FO20,540^FDNaplatičar: 8^FS
+^FO20,565^FD${datumIspisa}^FS
+
+^FO20,600^FDZKI:^FS
+^FO20,625^FD${data.zki}^FS
+
+^FO20,660^FDJIR:^FS
+^FO20,685^FD${data.jir}^FS
+
+^FO140,740^BQN,2,5
+^FDLA,${data.qr}^FS
+
+^XZ
+`;
+
+  const blob = new Blob([zpl], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "racun.zpl";
+  link.click();
+}
 </script>
+
 </body>
 </html>
