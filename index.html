@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zebra ZPL Generator</title>
+<title>Zebra račun</title>
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  font-family: Arial;
   background: #f5f5f5;
+  padding: 20px;
 }
 .container {
   max-width: 400px;
@@ -22,17 +22,45 @@ input {
   width: 100%;
   padding: 10px;
   margin: 6px 0;
-  font-size: 16px;
 }
 button {
   width: 100%;
   padding: 12px;
-  font-size: 16px;
   background: black;
   color: white;
   border: none;
-  border-radius: 6px;
   margin-top: 10px;
+}
+
+/* toggle style */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.switch input { display:none; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background-color: #ccc;
+  border-radius: 24px;
+  top: 0; left: 0; right: 0; bottom: 0;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: .2s;
+}
+input:checked + .slider {
+  background-color: black;
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
 }
 </style>
 </head>
@@ -40,153 +68,159 @@ button {
 <body>
 
 <div class="container">
-<h2>Zebra račun</h2>
+<h3>Zebra račun</h3>
 
 <input id="ime_broda" placeholder="Ime broda">
-<input id="vrijeme" placeholder="Vrijeme (npr 12:00:00)">
-<input id="datum" placeholder="Datum (npr 01.06.2025)">
-<input id="ukupno" placeholder="Ukupno (npr 36,00)">
-<input id="osnovica" placeholder="Osnovica">
-<input id="pdv" placeholder="PDV">
-<input id="datum_ispisa" placeholder="Datum i vrijeme ispisa">
+<input id="ukupno" placeholder="Ukupno (36,00)">
+
+<label>Noćna karta</label><br>
+<label class="switch">
+  <input type="checkbox" id="nightTicket">
+  <span class="slider"></span>
+</label>
+
+<input id="sati" placeholder="Broj sati">
+
+<label style="margin-top:10px;display:block;">QR / ZKI / JIR</label>
+<label class="switch">
+  <input type="checkbox" id="useNewQR" checked>
+  <span class="slider"></span>
+</label>
+
 <input id="zki" placeholder="ZKI">
 <input id="jir" placeholder="JIR">
 <input id="qr" placeholder="QR link">
-<label style="display:flex;align-items:center;margin-top:10px;">
-<input type="checkbox" id="useNewQR" checked style="margin-right:10px;">
-  Unesi novi QR / ZKI / JIR
-</label>
+
 <button onclick="generateZPL()">Generiraj ZPL</button>
 
 </div>
-  <label style="display:flex;align-items:center;margin-top:10px;">
-  <input type="checkbox" id="nightTicket" style="margin-right:10px;">
-  Noćna karta
-</label>
-  <input id="sati" placeholder="Broj sati (npr 3)">
+
 <script>
-function formatDateTime() {
-  const now = new Date();
 
-  const pad = (n) => n.toString().padStart(2, '0');
-
-  const day = pad(now.getDate());
-  const month = pad(now.getMonth() + 1);
-  const year = now.getFullYear();
-
-  const hours = pad(now.getHours());
-  const minutes = pad(now.getMinutes());
-  const seconds = pad(now.getSeconds());
-
-  return `${day}.${month}.${year}. ${hours}:${minutes}:${seconds} 1.tiskanje`;
+// spremanje QR/ZKI/JIR
+function getStoredOrNew(id, key, useNew) {
+  if (useNew) {
+    const val = document.getElementById(id).value;
+    if (val) localStorage.setItem(key, val);
+    return val;
+  } else {
+    return localStorage.getItem(key) || "";
+  }
 }
 
-function calculatePDV(total) {
-  const ukupno = parseFloat(total.replace(",", "."));
-  if (isNaN(ukupno)) return { osnovica: "0,00", pdv: "0,00" };
+// vrijeme ispisa (AUTO)
+function nowFormat() {
+  const d = new Date();
+  const p = n => n.toString().padStart(2,"0");
 
-  const osnovica = ukupno / 1.25;
-  const pdv = ukupno - osnovica;
+  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}. ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 1.tiskanje`;
+}
+
+// PDV auto
+function calc(total) {
+  const t = parseFloat(total.replace(",","."));
+  if (isNaN(t)) return {o:"0,00", p:"0,00"};
+
+  const o = t / 1.25;
+  const p = t - o;
 
   return {
-    osnovica: osnovica.toFixed(2).replace(".", ","),
-    pdv: pdv.toFixed(2).replace(".", ",")
+    o: o.toFixed(2).replace(".",","),
+    p: p.toFixed(2).replace(".",",")
   };
 }
 
-function getVrijediDo() {
-  const isNight = document.getElementById("nightTicket").checked;
+// vrijedi do
+function vrijediDo() {
+  const night = document.getElementById("nightTicket").checked;
   const now = new Date();
-
   let target = new Date();
 
-  if (isNight) {
-    // sutra u 12:00
-    target.setDate(now.getDate() + 1);
-    target.setHours(12, 0, 0);
+  if (night) {
+    target.setDate(now.getDate()+1);
+    target.setHours(12,0,0);
   } else {
     const sati = parseInt(document.getElementById("sati").value || "0");
-    target = new Date(now.getTime() + sati * 60 * 60 * 1000);
+    target = new Date(now.getTime() + sati*3600000);
   }
 
-  const pad = (n) => n.toString().padStart(2, "0");
+  const p = n => n.toString().padStart(2,"0");
 
-  const vrijeme = `${pad(target.getHours())}:${pad(target.getMinutes())}:${pad(target.getSeconds())}`;
-  const datum = `${pad(target.getDate())}.${pad(target.getMonth() + 1)}.${target.getFullYear()}.`;
-
-  return { vrijeme, datum };
+  return {
+    v: `${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
+    d: `${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
+  };
 }
 
-function formatDateTime() {
-  const now = new Date();
-  const pad = (n) => n.toString().padStart(2, "0");
+// toggle logika
+document.getElementById("nightTicket").addEventListener("change", function(){
+  document.getElementById("sati").style.display = this.checked ? "none" : "block";
+});
 
-  return `${pad(now.getDate())}.${pad(now.getMonth()+1)}.${now.getFullYear()}. ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} 1.tiskanje`;
-}
+document.getElementById("useNewQR").addEventListener("change", function(){
+  const dis = !this.checked;
+  document.getElementById("zki").disabled = dis;
+  document.getElementById("jir").disabled = dis;
+  document.getElementById("qr").disabled = dis;
+});
 
-function generateZPLString() {
-  const useNew = document.getElementById("useNewQR").checked;
-
-  const zki = getStoredOrNew("zki", "last_zki", useNew);
-  const jir = getStoredOrNew("jir", "last_jir", useNew);
-  const qr = getStoredOrNew("qr", "last_qr", useNew);
+// GENERATOR
+function generateZPL() {
 
   const ime = document.getElementById("ime_broda").value;
   const ukupno = document.getElementById("ukupno").value;
 
-  const { osnovica, pdv } = calculatePDV(ukupno);
-  const { vrijeme, datum } = getVrijediDo();
-  const datumIspisa = formatDateTime();
+  const useNew = document.getElementById("useNewQR").checked;
 
-  return `
+  const zki = getStoredOrNew("zki","zki",useNew);
+  const jir = getStoredOrNew("jir","jir",useNew);
+  const qr = getStoredOrNew("qr","qr",useNew);
+
+  const {o, p} = calc(ukupno);
+  const {v, d} = vrijediDo();
+  const time = nowFormat();
+
+  const zpl = `
 ^XA
 ^PW480
-^LL2000
 ^CI28
 
 ^CF0,20
 ^FO20,20^FDGRADSKO PODUZECE d.o.o.^FS
-^FO20,42^FDObala J.I.Cote 10^FS
-^FO20,64^FDOIB:17036495780^FS
+^FO20,45^FDObala J.I.Cote 10^FS
+^FO20,70^FDOIB:17036495780^FS
 
 ^FO20,110^FDRAČUN BROJ:^FS
-^CF0,22
-^FO20,132^FD151/TIJASNICA/1^FS
+^FO20,135^FD151/TIJASNICA/1^FS
 
-^CF0,20
-^FO20,175^FDZA:^FS
-
+^FO20,180^FDZA:^FS
 ^CF0,42
-^FO20,200^FD${ime}^FS
+^FO20,210^FD${ime}^FS
 
 ^CF0,20
-^FO20,250^FDBROD DO 12M^FS
+^FO20,260^FDBROD DO 12M^FS
+^FO20,285^FDVRIJEDI DO:^FS
 
-^FO20,275^FDVRIJEDI DO:^FS
-
-^CF0,28
-^FO20,300^FD${vrijeme}^FS
-^FO20,330^FD${datum}^FS
+^FO20,310^FD${v}^FS
+^FO20,335^FD${d}^FS
 
 ^FO20,370^GB440,1,1^FS
 
-^CF0,24
 ^FO20,390^FDUKUPNO^FS
 ^FO330,390^FD${ukupno} EUR^FS
 
 ^FO20,415^GB440,1,1^FS
 
-^CF0,20
 ^FO20,440^FDOSNOVICA^FS
-^FO350,440^FD${osnovica}^FS
+^FO350,440^FD${o}^FS
 
 ^FO20,465^FDPDV (25%)^FS
-^FO350,465^FD${pdv}^FS
+^FO350,465^FD${p}^FS
 
 ^FO20,500^FDNAČIN PLAĆANJA: NOVČANICE^FS
 
 ^FO20,540^FDNaplatičar: 8^FS
-^FO20,565^FD${datumIspisa}^FS
+^FO20,565^FD${time}^FS
 
 ^FO20,600^FDZKI:^FS
 ^FO20,625^FD${zki}^FS
@@ -199,13 +233,14 @@ function generateZPLString() {
 
 ^XZ
 `;
+
+  const blob = new Blob([zpl], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "racun.zpl";
+  a.click();
 }
-  const blob = new Blob([zpl], { type: "text/plain" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "racun.zpl";
-  link.click();
-}
+
 </script>
 
 </body>
