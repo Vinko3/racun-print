@@ -18,7 +18,7 @@ body {
   padding: 20px;
   border-radius: 10px;
 }
-input {
+input, select {
   width: 100%;
   padding: 10px;
   margin: 6px 0;
@@ -32,7 +32,6 @@ button {
   margin-top: 10px;
 }
 
-/* toggle style */
 .switch {
   position: relative;
   display: inline-block;
@@ -42,14 +41,13 @@ button {
 .switch input { display:none; }
 .slider {
   position: absolute;
-  cursor: pointer;
   background-color: #ccc;
   border-radius: 24px;
   top: 0; left: 0; right: 0; bottom: 0;
 }
 .slider:before {
-  position: absolute;
   content: "";
+  position: absolute;
   height: 18px; width: 18px;
   left: 3px; bottom: 3px;
   background: white;
@@ -57,7 +55,7 @@ button {
   transition: .2s;
 }
 input:checked + .slider {
-  background-color: black;
+  background: black;
 }
 input:checked + .slider:before {
   transform: translateX(26px);
@@ -68,20 +66,38 @@ input:checked + .slider:before {
 <body>
 
 <div class="container">
+
 <h3>Zebra račun</h3>
 
-<input id="ime_broda" placeholder="Ime broda">
-<input id="ukupno" placeholder="Ukupno (36,00)">
+<input id="ime" placeholder="Ime broda">
 
-<label>Noćna karta</label><br>
-<label class="switch">
-  <input type="checkbox" id="nightTicket">
-  <span class="slider"></span>
-</label>
+<select id="tipNaplate">
+  <option value="sat">Po satu</option>
+  <option value="noc">Noćna karta</option>
+</select>
+
+<select id="vrsta">
+  <option value="brod">Brod</option>
+  <option value="katamaran">Katamaran</option>
+</select>
+
+<select id="duzina">
+  <script>
+    for(let i=10;i<=20;i++){
+      document.write(`<option value="${i}">${i}m</option>`);
+    }
+  </script>
+</select>
 
 <input id="sati" placeholder="Broj sati">
 
-<label style="margin-top:10px;display:block;">QR / ZKI / JIR</label>
+<label>Noćna karta</label><br>
+<label class="switch">
+  <input type="checkbox" id="dummyToggle" disabled>
+  <span class="slider"></span>
+</label>
+
+<label style="margin-top:10px;">QR / ZKI / JIR</label><br>
 <label class="switch">
   <input type="checkbox" id="useNewQR" checked>
   <span class="slider"></span>
@@ -97,7 +113,6 @@ input:checked + .slider:before {
 
 <script>
 
-// spremanje QR/ZKI/JIR
 function getStoredOrNew(id, key, useNew) {
   if (useNew) {
     const val = document.getElementById(id).value;
@@ -108,35 +123,54 @@ function getStoredOrNew(id, key, useNew) {
   }
 }
 
-// vrijeme ispisa (AUTO)
 function nowFormat() {
   const d = new Date();
   const p = n => n.toString().padStart(2,"0");
-
   return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}. ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 1.tiskanje`;
 }
 
-// PDV auto
-function calc(total) {
-  const t = parseFloat(total.replace(",","."));
-  if (isNaN(t)) return {o:"0,00", p:"0,00"};
-
+function calcPDV(total) {
+  const t = parseFloat(total);
   const o = t / 1.25;
   const p = t - o;
-
   return {
     o: o.toFixed(2).replace(".",","),
     p: p.toFixed(2).replace(".",",")
   };
 }
 
-// vrijedi do
+function izracunajCijenu() {
+  const tip = document.getElementById("tipNaplate").value;
+  const vrsta = document.getElementById("vrsta").value;
+  const duzina = parseInt(document.getElementById("duzina").value);
+  const sati = parseInt(document.getElementById("sati").value || "0");
+
+  let cijena = 0;
+
+  if (tip === "sat") {
+    cijena = duzina <= 10 ? sati * 4 : sati * 7;
+  } else {
+    cijena = vrsta === "brod" ? duzina * 3 : duzina * 4.5;
+  }
+
+  return cijena;
+}
+
+function tekstBroda() {
+  const vrsta = document.getElementById("vrsta").value;
+  const duzina = document.getElementById("duzina").value;
+
+  return vrsta === "katamaran"
+    ? `KATAMARAN DO ${duzina}M`
+    : `BROD DO ${duzina}M`;
+}
+
 function vrijediDo() {
-  const night = document.getElementById("nightTicket").checked;
+  const tip = document.getElementById("tipNaplate").value;
   const now = new Date();
   let target = new Date();
 
-  if (night) {
+  if (tip === "noc") {
     target.setDate(now.getDate()+1);
     target.setHours(12,0,0);
   } else {
@@ -152,9 +186,9 @@ function vrijediDo() {
   };
 }
 
-// toggle logika
-document.getElementById("nightTicket").addEventListener("change", function(){
-  document.getElementById("sati").style.display = this.checked ? "none" : "block";
+// toggle UI
+document.getElementById("tipNaplate").addEventListener("change", function(){
+  document.getElementById("sati").style.display = this.value === "noc" ? "none" : "block";
 });
 
 document.getElementById("useNewQR").addEventListener("change", function(){
@@ -164,11 +198,11 @@ document.getElementById("useNewQR").addEventListener("change", function(){
   document.getElementById("qr").disabled = dis;
 });
 
-// GENERATOR
 function generateZPL() {
 
-  const ime = document.getElementById("ime_broda").value;
-  const ukupno = document.getElementById("ukupno").value;
+  const ime = document.getElementById("ime").value;
+  const cijena = izracunajCijenu();
+  const ukupno = cijena.toFixed(2).replace(".",",");
 
   const useNew = document.getElementById("useNewQR").checked;
 
@@ -176,9 +210,10 @@ function generateZPL() {
   const jir = getStoredOrNew("jir","jir",useNew);
   const qr = getStoredOrNew("qr","qr",useNew);
 
-  const {o, p} = calc(ukupno);
+  const {o, p} = calcPDV(cijena);
   const {v, d} = vrijediDo();
   const time = nowFormat();
+  const opis = tekstBroda();
 
   const zpl = `
 ^XA
@@ -198,16 +233,16 @@ function generateZPL() {
 ^FO20,210^FD${ime}^FS
 
 ^CF0,20
-^FO20,260^FDBROD DO 12M^FS
+^FO20,260^FD${opis}^FS
 ^FO20,285^FDVRIJEDI DO:^FS
 
-^FO20,310^FD${v}^FS
-^FO20,335^FD${d}^FS
+^FO260,300^FB200,1,0,R^FD${v}^FS
+^FO260,330^FB200,1,0,R^FD${d}^FS
 
 ^FO20,370^GB440,1,1^FS
 
 ^FO20,390^FDUKUPNO^FS
-^FO330,390^FD${ukupno} EUR^FS
+^FO300,390^FD${ukupno} EUR^FS
 
 ^FO20,415^GB440,1,1^FS
 
