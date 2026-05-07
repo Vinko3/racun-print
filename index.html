@@ -25,6 +25,7 @@ input,select{
   padding:12px;
   margin:6px 0;
   font-size:16px;
+  box-sizing:border-box;
 }
 
 button{
@@ -127,14 +128,14 @@ input:checked + .slider:before{
 
 <script>
 
-// DUŽINE
+// dužine
 const duzinaSelect = document.getElementById("duzina");
 
 for(let i=10;i<=20;i++){
   duzinaSelect.innerHTML += `<option value="${i}">${i}m</option>`;
 }
 
-// QR STORAGE
+// spremanje QR/ZKI/JIR
 function getStoredOrNew(id,key,useNew){
 
   if(useNew){
@@ -154,7 +155,7 @@ function getStoredOrNew(id,key,useNew){
   }
 }
 
-// DATUM ISPISA
+// datum ispisa
 function nowFormat(){
 
   const d = new Date();
@@ -175,9 +176,10 @@ function calcPDV(total){
     osnovica: osnovica.toFixed(2).replace(".",","),
     pdv: pdv.toFixed(2).replace(".",",")
   };
+
 }
 
-// IZRAČUN CIJENE
+// cijena
 function izracunajCijenu(){
 
   const tip = document.getElementById("tipNaplate").value;
@@ -187,7 +189,6 @@ function izracunajCijenu(){
 
   let cijena = 0;
 
-  // SATNA
   if(tip === "sat"){
 
     if(duzina <= 10){
@@ -196,10 +197,7 @@ function izracunajCijenu(){
       cijena = sati * 7;
     }
 
-  }
-
-  // NOĆNA
-  else{
+  }else{
 
     if(vrsta === "brod"){
       cijena = duzina * 3;
@@ -213,7 +211,7 @@ function izracunajCijenu(){
 
 }
 
-// OPIS
+// opis
 function tekstBroda(){
 
   const vrsta = document.getElementById("vrsta").value;
@@ -227,7 +225,7 @@ function tekstBroda(){
 
 }
 
-// VRIJEDI DO
+// vrijedi do
 function vrijediDo(){
 
   const tip = document.getElementById("tipNaplate").value;
@@ -252,26 +250,26 @@ function vrijediDo(){
   const p = n => n.toString().padStart(2,"0");
 
   return{
-    vrijeme: `${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
-    datum: `${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
+    vrijeme:`${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
+    datum:`${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
   };
 
 }
 
-// SATI INPUT SHOW/HIDE
+// sakrij sate za noćnu
 document.getElementById("tipNaplate").addEventListener("change",function(){
 
-  const satInput = document.getElementById("sati");
+  const sati = document.getElementById("sati");
 
   if(this.value === "noc"){
-    satInput.style.display = "none";
+    sati.style.display = "none";
   }else{
-    satInput.style.display = "block";
+    sati.style.display = "block";
   }
 
 });
 
-// QR DISABLE
+// disable qr fields
 document.getElementById("useNewQR").addEventListener("change",function(){
 
   const disabled = !this.checked;
@@ -282,7 +280,7 @@ document.getElementById("useNewQR").addEventListener("change",function(){
 
 });
 
-// GENERATE
+// GENERIRANJE
 function generateZPL(){
 
   const ime = document.getElementById("ime").value;
@@ -307,61 +305,61 @@ function generateZPL(){
 
   const qr = getStoredOrNew("qr","last_qr",useNew);
 
-  const zpl = `
+const zpl = `
 ^XA
-^PW480
-^LL1200
+^PW380
+^LL950
 ^CI28
 
-^CF0,24
+^CF0,22
 ^FO20,20^FDGRADSKO PODUZECE d.o.o.^FS
-^FO20,50^FDObala J.I.Cote 10^FS
-^FO20,80^FDOIB:17036495780^FS
+^FO20,48^FDObala J.I.Cote 10^FS
+^FO20,76^FDOIB:17036495780^FS
 
-^FO20,140^FDRAČUN BROJ:^FS
-^FO20,170^FD151/TIJASNICA/1^FS
+^FO20,130^FDRAČUN BROJ:^FS
+^FO20,158^FD151/TIJASNICA/1^FS
 
-^FO20,230^FDZA:^FS
+^FO20,220^FDZA:^FS
 
-^CF0,60
-^FO20,270^FB440,1,0,R^FD${ime}^FS
+^CF0,46
+^FO20,255^FB320,1,0,R^FD${ime}^FS
 
-^CF0,28
-^FO20,340^FD${opis}^FS
+^CF0,24
+^FO20,315^FD${opis}^FS
 
-^FO20,380^FDVRIJEDI DO:^FS
+^FO20,355^FDVRIJEDI DO:^FS
 
-^CF0,36
-^FO220,420^FB220,1,0,R^FD${vrijedi.vrijeme}^FS
-^FO220,460^FB220,1,0,R^FD${vrijedi.datum}^FS
+^CF0,30
+^FO140,395^FB180,1,0,R^FD${vrijedi.vrijeme}^FS
+^FO140,430^FB180,1,0,R^FD${vrijedi.datum}^FS
 
-^FO20,520^GB440,2,2^FS
-
-^CF0,34
-^FO20,540^FDUKUPNO^FS
-^FO250,540^FB180,1,0,R^FD${ukupno} EUR^FS
-
-^FO20,590^GB440,2,2^FS
+^FO20,490^GB340,2,2^FS
 
 ^CF0,28
-^FO20,630^FDOSNOVICA^FS
-^FO300,630^FB120,1,0,R^FD${pdvData.osnovica}^FS
+^FO20,510^FDUKUPNO^FS
+^FO170,510^FB150,1,0,R^FD${ukupno} EUR^FS
 
-^FO20,670^FDPDV (25%)^FS
-^FO300,670^FB120,1,0,R^FD${pdvData.pdv}^FS
+^FO20,555^GB340,2,2^FS
 
-^FO20,730^FDNAČIN PLAĆANJA: NOVČANICE^FS
+^CF0,24
+^FO20,590^FDOSNOVICA^FS
+^FO220,590^FB100,1,0,R^FD${pdvData.osnovica}^FS
 
-^FO20,800^FDNaplatičar: 8^FS
-^FO20,840^FD${time}^FS
+^FO20,625^FDPDV (25%)^FS
+^FO220,625^FB100,1,0,R^FD${pdvData.pdv}^FS
 
-^FO20,920^FDZKI:^FS
-^FO20,955^FD${zki}^FS
+^FO20,685^FDNAČIN PLAĆANJA: NOVČANICE^FS
 
-^FO20,1020^FDJIR:^FS
-^FO20,1055^FD${jir}^FS
+^FO20,745^FDNaplatičar: 8^FS
+^FO20,780^FD${time}^FS
 
-^FO120,1120^BQN,2,7
+^FO20,840^FDZKI:^FS
+^FO20,870^FD${zki}^FS
+
+^FO20,915^FDJIR:^FS
+^FO20,945^FD${jir}^FS
+
+^FO95,990^BQN,2,5
 ^FDLA,${qr}^FS
 
 ^XZ
