@@ -6,59 +6,84 @@
 <title>Zebra račun</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #f5f5f5;
-  padding: 20px;
-}
-.container {
-  max-width: 400px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-}
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-}
-button {
-  width: 100%;
-  padding: 12px;
-  background: black;
-  color: white;
-  border: none;
-  margin-top: 10px;
+body{
+  font-family:Arial;
+  background:#f5f5f5;
+  padding:20px;
 }
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
+.container{
+  max-width:400px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
 }
-.switch input { display:none; }
-.slider {
-  position: absolute;
-  background-color: #ccc;
-  border-radius: 24px;
-  top: 0; left: 0; right: 0; bottom: 0;
+
+input,select{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  font-size:16px;
 }
-.slider:before {
-  content: "";
-  position: absolute;
-  height: 18px; width: 18px;
-  left: 3px; bottom: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: .2s;
+
+button{
+  width:100%;
+  padding:14px;
+  background:black;
+  color:white;
+  border:none;
+  font-size:16px;
+  margin-top:12px;
+  border-radius:8px;
 }
-input:checked + .slider {
-  background: black;
+
+.switch{
+  position:relative;
+  display:inline-block;
+  width:52px;
+  height:26px;
 }
-input:checked + .slider:before {
-  transform: translateX(26px);
+
+.switch input{
+  display:none;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#ccc;
+  border-radius:30px;
+}
+
+.slider:before{
+  position:absolute;
+  content:"";
+  height:20px;
+  width:20px;
+  left:3px;
+  bottom:3px;
+  background:white;
+  border-radius:50%;
+  transition:.2s;
+}
+
+input:checked + .slider{
+  background:black;
+}
+
+input:checked + .slider:before{
+  transform:translateX(26px);
+}
+
+.label{
+  margin-top:12px;
+  display:block;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -67,12 +92,12 @@ input:checked + .slider:before {
 
 <div class="container">
 
-<h3>Zebra račun</h3>
+<h2>Zebra račun</h2>
 
 <input id="ime" placeholder="Ime broda">
 
 <select id="tipNaplate">
-  <option value="sat">Po satu</option>
+  <option value="sat">Satna naplata</option>
   <option value="noc">Noćna karta</option>
 </select>
 
@@ -81,23 +106,12 @@ input:checked + .slider:before {
   <option value="katamaran">Katamaran</option>
 </select>
 
-<select id="duzina">
-  <script>
-    for(let i=10;i<=20;i++){
-      document.write(`<option value="${i}">${i}m</option>`);
-    }
-  </script>
-</select>
+<select id="duzina"></select>
 
-<input id="sati" placeholder="Broj sati">
+<input id="sati" type="number" placeholder="Broj sati">
 
-<label>Noćna karta</label><br>
-<label class="switch">
-  <input type="checkbox" id="dummyToggle" disabled>
-  <span class="slider"></span>
-</label>
+<label class="label">Novi QR / ZKI / JIR</label>
 
-<label style="margin-top:10px;">QR / ZKI / JIR</label><br>
 <label class="switch">
   <input type="checkbox" id="useNewQR" checked>
   <span class="slider"></span>
@@ -107,39 +121,65 @@ input:checked + .slider:before {
 <input id="jir" placeholder="JIR">
 <input id="qr" placeholder="QR link">
 
-<button onclick="generateZPL()">Generiraj ZPL</button>
+<button onclick="generateZPL()">GENERIRAJ ZPL</button>
 
 </div>
 
 <script>
 
-function getStoredOrNew(id, key, useNew) {
-  if (useNew) {
+// DUŽINE
+const duzinaSelect = document.getElementById("duzina");
+
+for(let i=10;i<=20;i++){
+  duzinaSelect.innerHTML += `<option value="${i}">${i}m</option>`;
+}
+
+// QR STORAGE
+function getStoredOrNew(id,key,useNew){
+
+  if(useNew){
+
     const val = document.getElementById(id).value;
-    if (val) localStorage.setItem(key, val);
+
+    if(val){
+      localStorage.setItem(key,val);
+    }
+
     return val;
-  } else {
+
+  }else{
+
     return localStorage.getItem(key) || "";
+
   }
 }
 
-function nowFormat() {
+// DATUM ISPISA
+function nowFormat(){
+
   const d = new Date();
+
   const p = n => n.toString().padStart(2,"0");
+
   return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}. ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 1.tiskanje`;
+
 }
 
-function calcPDV(total) {
-  const t = parseFloat(total);
-  const o = t / 1.25;
-  const p = t - o;
-  return {
-    o: o.toFixed(2).replace(".",","),
-    p: p.toFixed(2).replace(".",",")
+// PDV
+function calcPDV(total){
+
+  const osnovica = total / 1.25;
+  const pdv = total - osnovica;
+
+  return{
+    osnovica: osnovica.toFixed(2).replace(".",","),
+    pdv: pdv.toFixed(2).replace(".",",")
   };
 }
 
-function izracunajCijenu() {
+// IZRAČUN CIJENE
+function izracunajCijenu(){
+
   const tip = document.getElementById("tipNaplate").value;
   const vrsta = document.getElementById("vrsta").value;
   const duzina = parseInt(document.getElementById("duzina").value);
@@ -147,133 +187,196 @@ function izracunajCijenu() {
 
   let cijena = 0;
 
-  if (tip === "sat") {
-    cijena = duzina <= 10 ? sati * 4 : sati * 7;
-  } else {
-    cijena = vrsta === "brod" ? duzina * 3 : duzina * 4.5;
+  // SATNA
+  if(tip === "sat"){
+
+    if(duzina <= 10){
+      cijena = sati * 4;
+    }else{
+      cijena = sati * 7;
+    }
+
+  }
+
+  // NOĆNA
+  else{
+
+    if(vrsta === "brod"){
+      cijena = duzina * 3;
+    }else{
+      cijena = duzina * 4.5;
+    }
+
   }
 
   return cijena;
+
 }
 
-function tekstBroda() {
+// OPIS
+function tekstBroda(){
+
   const vrsta = document.getElementById("vrsta").value;
   const duzina = document.getElementById("duzina").value;
 
-  return vrsta === "katamaran"
-    ? `KATAMARAN DO ${duzina}M`
-    : `BROD DO ${duzina}M`;
+  if(vrsta === "katamaran"){
+    return `KATAMARAN DO ${duzina}M`;
+  }
+
+  return `BROD DO ${duzina}M`;
+
 }
 
-function vrijediDo() {
+// VRIJEDI DO
+function vrijediDo(){
+
   const tip = document.getElementById("tipNaplate").value;
+
   const now = new Date();
+
   let target = new Date();
 
-  if (tip === "noc") {
+  if(tip === "noc"){
+
     target.setDate(now.getDate()+1);
     target.setHours(12,0,0);
-  } else {
+
+  }else{
+
     const sati = parseInt(document.getElementById("sati").value || "0");
-    target = new Date(now.getTime() + sati*3600000);
+
+    target = new Date(now.getTime() + sati * 60 * 60 * 1000);
+
   }
 
   const p = n => n.toString().padStart(2,"0");
 
-  return {
-    v: `${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
-    d: `${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
+  return{
+    vrijeme: `${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
+    datum: `${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
   };
+
 }
 
-// toggle UI
-document.getElementById("tipNaplate").addEventListener("change", function(){
-  document.getElementById("sati").style.display = this.value === "noc" ? "none" : "block";
+// SATI INPUT SHOW/HIDE
+document.getElementById("tipNaplate").addEventListener("change",function(){
+
+  const satInput = document.getElementById("sati");
+
+  if(this.value === "noc"){
+    satInput.style.display = "none";
+  }else{
+    satInput.style.display = "block";
+  }
+
 });
 
-document.getElementById("useNewQR").addEventListener("change", function(){
-  const dis = !this.checked;
-  document.getElementById("zki").disabled = dis;
-  document.getElementById("jir").disabled = dis;
-  document.getElementById("qr").disabled = dis;
+// QR DISABLE
+document.getElementById("useNewQR").addEventListener("change",function(){
+
+  const disabled = !this.checked;
+
+  document.getElementById("zki").disabled = disabled;
+  document.getElementById("jir").disabled = disabled;
+  document.getElementById("qr").disabled = disabled;
+
 });
 
-function generateZPL() {
+// GENERATE
+function generateZPL(){
 
   const ime = document.getElementById("ime").value;
-  const cijena = izracunajCijenu();
-  const ukupno = cijena.toFixed(2).replace(".",",");
+
+  const ukupnoBroj = izracunajCijenu();
+
+  const ukupno = ukupnoBroj.toFixed(2).replace(".",",");
+
+  const pdvData = calcPDV(ukupnoBroj);
+
+  const vrijedi = vrijediDo();
+
+  const opis = tekstBroda();
+
+  const time = nowFormat();
 
   const useNew = document.getElementById("useNewQR").checked;
 
-  const zki = getStoredOrNew("zki","zki",useNew);
-  const jir = getStoredOrNew("jir","jir",useNew);
-  const qr = getStoredOrNew("qr","qr",useNew);
+  const zki = getStoredOrNew("zki","last_zki",useNew);
 
-  const {o, p} = calcPDV(cijena);
-  const {v, d} = vrijediDo();
-  const time = nowFormat();
-  const opis = tekstBroda();
+  const jir = getStoredOrNew("jir","last_jir",useNew);
+
+  const qr = getStoredOrNew("qr","last_qr",useNew);
 
   const zpl = `
 ^XA
 ^PW480
+^LL1200
 ^CI28
 
-^CF0,20
+^CF0,24
 ^FO20,20^FDGRADSKO PODUZECE d.o.o.^FS
-^FO20,45^FDObala J.I.Cote 10^FS
-^FO20,70^FDOIB:17036495780^FS
+^FO20,50^FDObala J.I.Cote 10^FS
+^FO20,80^FDOIB:17036495780^FS
 
-^FO20,110^FDRAČUN BROJ:^FS
-^FO20,135^FD151/TIJASNICA/1^FS
+^FO20,140^FDRAČUN BROJ:^FS
+^FO20,170^FD151/TIJASNICA/1^FS
 
-^FO20,180^FDZA:^FS
-^CF0,42
-^FO20,210^FD${ime}^FS
+^FO20,230^FDZA:^FS
 
-^CF0,20
-^FO20,260^FD${opis}^FS
-^FO20,285^FDVRIJEDI DO:^FS
+^CF0,60
+^FO20,270^FB440,1,0,R^FD${ime}^FS
 
-^FO260,300^FB200,1,0,R^FD${v}^FS
-^FO260,330^FB200,1,0,R^FD${d}^FS
+^CF0,28
+^FO20,340^FD${opis}^FS
 
-^FO20,370^GB440,1,1^FS
+^FO20,380^FDVRIJEDI DO:^FS
 
-^FO20,390^FDUKUPNO^FS
-^FO300,390^FD${ukupno} EUR^FS
+^CF0,36
+^FO220,420^FB220,1,0,R^FD${vrijedi.vrijeme}^FS
+^FO220,460^FB220,1,0,R^FD${vrijedi.datum}^FS
 
-^FO20,415^GB440,1,1^FS
+^FO20,520^GB440,2,2^FS
 
-^FO20,440^FDOSNOVICA^FS
-^FO350,440^FD${o}^FS
+^CF0,34
+^FO20,540^FDUKUPNO^FS
+^FO250,540^FB180,1,0,R^FD${ukupno} EUR^FS
 
-^FO20,465^FDPDV (25%)^FS
-^FO350,465^FD${p}^FS
+^FO20,590^GB440,2,2^FS
 
-^FO20,500^FDNAČIN PLAĆANJA: NOVČANICE^FS
+^CF0,28
+^FO20,630^FDOSNOVICA^FS
+^FO300,630^FB120,1,0,R^FD${pdvData.osnovica}^FS
 
-^FO20,540^FDNaplatičar: 8^FS
-^FO20,565^FD${time}^FS
+^FO20,670^FDPDV (25%)^FS
+^FO300,670^FB120,1,0,R^FD${pdvData.pdv}^FS
 
-^FO20,600^FDZKI:^FS
-^FO20,625^FD${zki}^FS
+^FO20,730^FDNAČIN PLAĆANJA: NOVČANICE^FS
 
-^FO20,660^FDJIR:^FS
-^FO20,685^FD${jir}^FS
+^FO20,800^FDNaplatičar: 8^FS
+^FO20,840^FD${time}^FS
 
-^FO140,740^BQN,2,5
+^FO20,920^FDZKI:^FS
+^FO20,955^FD${zki}^FS
+
+^FO20,1020^FDJIR:^FS
+^FO20,1055^FD${jir}^FS
+
+^FO120,1120^BQN,2,7
 ^FDLA,${qr}^FS
 
 ^XZ
 `;
 
   const blob = new Blob([zpl], {type:"text/plain"});
+
   const a = document.createElement("a");
+
   a.href = URL.createObjectURL(blob);
+
   a.download = "racun.zpl";
+
   a.click();
+
 }
 
 </script>
