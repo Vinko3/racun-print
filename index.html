@@ -326,7 +326,78 @@ function generateZPL(){
   const jir = getStoredOrNew("jir","last_jir",useNew);
 
   const qr = getStoredOrNew("qr","last_qr",useNew);
+  
+  const zpl = `
+^XA
+^PW380
+^LL1200
+^CI28
 
+// --- ZAGLAVLJE ---
+^CF0,22
+^FO20,40^FDGRADSKO PODUZECE d.o.o.^FS
+^FO20,65^FDObala J.I.Cote 10^FS
+^FO20,90^FDOIB:17036495780^FS
+
+// --- BROJ RAČUNA ---
+^CF0,28
+^FO20,150^FDRačun broj:^FS
+^CF0,35
+^FO20,185^FD25/TIJASNICA/1^FS
+
+^CF0,24
+^FO20,240^FDZA:^FS
+
+// --- NAZIV (Desno poravnato, Bold) ---
+^A0N,60,55^FO20,270^FB340,1,0,R^FD${ime.toUpperCase()}^FS
+
+// --- OPIS ---
+^CF0,25
+^FO20,340^FD${opis}^FS
+
+// --- VRIJEDI DO (Desno poravnato) ---
+^CF0,22
+^FO20,380^FB340,1,0,R^FDVRIJEDI DO:^FS
+^A0N,55,50^FO20,410^FB340,1,0,R^FD${vrijedi.vrijeme}^FS
+^A0N,55,50^FO20,470^FB340,1,0,R^FD${vrijedi.datum}^FS
+
+// --- UKUPNO (Bold i poravnato) ---
+^A0N,35,35^FO20,560^FDUKUPNO^FS
+^A0N,35,35^FO20,560^FB340,1,0,R^FD${ukupno} EUR^FS
+
+// --- LINIJA ---
+^FO20,605^GB340,3,3^FS
+
+// --- POREZNI PODACI (Sitniji font) ---
+^CF0,20
+^FO20,630^FDOSNOVICA^FS
+^FO20,630^FB340,1,0,R^FD${pdvData.osnovica}^FS
+
+^FO20,660^FDPDV (25,00%)^FS
+^FO20,660^FB340,1,0,R^FD${pdvData.pdv}^FS
+
+^CF0,22
+^FO20,710^FDNAČIN PLAĆANJA: NOVČANICE^FS
+
+// --- OPERATER I VRIJEME ---
+^CF0,18
+^FO20,770^FDNaplatičar: 8^FS
+^FO300,770^FDv1.79^FS
+^FO20,795^FD${time}^FS
+
+// --- ZKI / JIR (Jako mali font kao na originalu) ---
+^A0N,20,18^FO20,830^FDZKI:^FS
+^A0N,18,16^FO20,855^TBN,340,40^FD${zki}^FS
+
+^A0N,20,18^FO20,910^FDJIR:^FS
+^A0N,18,16^FO20,935^TBN,340,40^FD${jir}^FS
+
+// --- QR KOD (Smanjen i centriran) ---
+^FO120,1000^BQN,2,5^FDLA,${qr}^FS
+
+^XZ
+`;
+/*
 const zpl = `
 ^XA
 ^PW380
@@ -400,7 +471,7 @@ const zpl = `
 
 ^XZ
 `;
-
+*/
   const blob = new Blob([zpl], {type:"text/plain"});
 
   const a = document.createElement("a");
