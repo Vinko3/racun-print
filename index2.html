@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zebra račun</title>
+
+<style>
+
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background:#f5f5f5;
+  padding:20px;
+}
+
+.container{
+  max-width:420px;
+  margin:auto;
+  background:white;
+  padding:22px;
+  border-radius:14px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+
+h2{
+  margin-top:0;
+  font-weight:700;
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  font-size:16px;
+  box-sizing:border-box;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  background:black;
+  color:white;
+  border:none;
+  font-size:16px;
+  margin-top:12px;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.switch{
+  position:relative;
+  display:inline-block;
+  width:52px;
+  height:26px;
+}
+
+.switch input{
+  display:none;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#ccc;
+  border-radius:30px;
+}
+
+.slider:before{
+  position:absolute;
+  content:"";
+  height:20px;
+  width:20px;
+  left:3px;
+  bottom:3px;
+  background:white;
+  border-radius:50%;
+  transition:.2s;
+}
+
+input:checked + .slider{
+  background:black;
+}
+
+input:checked + .slider:before{
+  transform:translateX(26px);
+}
+
+.label{
+  margin-top:12px;
+  display:block;
+  font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Zebra račun</h2>
+
+<input id="ime" placeholder="Ime broda">
+
+<select id="tipNaplate">
+  <option value="sat">Satna naplata</option>
+  <option value="noc">Noćna karta</option>
+</select>
+
+<select id="vrsta">
+  <option value="brod">Brod</option>
+  <option value="katamaran">Katamaran</option>
+</select>
+
+<select id="duzina"></select>
+
+<input id="sati" type="number" placeholder="Broj sati">
+
+<label class="label">Novi QR / ZKI / JIR</label>
+
+<label class="switch">
+  <input type="checkbox" id="useNewQR" checked>
+  <span class="slider"></span>
+</label>
+
+<input id="zki" placeholder="ZKI">
+<input id="jir" placeholder="JIR">
+<input id="qr" placeholder="QR link">
+
+<button onclick="generateZPL()">GENERIRAJ ZPL</button>
+
+</div>
+
+<script>
+
+// DUŽINE
+
+const duzinaSelect = document.getElementById("duzina");
+
+for(let i=10;i<=20;i++){
+  duzinaSelect.innerHTML += `<option value="${i}">${i}m</option>`;
+}
+
+// SPREMANJE QR/ZKI/JIR
+
+function getStoredOrNew(id,key,useNew){
+
+  if(useNew){
+
+    const val = document.getElementById(id).value;
+
+    if(val){
+      localStorage.setItem(key,val);
+    }
+
+    return val;
+
+  }else{
+
+    return localStorage.getItem(key) || "";
+
+  }
+}
+
+// DATUM ISPISA
+
+function nowFormat(){
+
+  const d = new Date();
+
+  const p = n => n.toString().padStart(2,"0");
+
+  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}. ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())} 1.tiskanje`;
+
+}
+
+// PDV
+
+function calcPDV(total){
+
+  const osnovica = total / 1.25;
+  const pdv = total - osnovica;
+
+  return{
+    osnovica: osnovica.toFixed(2).replace(".",","),
+    pdv: pdv.toFixed(2).replace(".",",")
+  };
+
+}
+
+// CIJENA
+
+function izracunajCijenu(){
+
+  const tip = document.getElementById("tipNaplate").value;
+  const vrsta = document.getElementById("vrsta").value;
+  const duzina = parseInt(document.getElementById("duzina").value);
+  const sati = parseInt(document.getElementById("sati").value || "0");
+
+  let cijena = 0;
+
+  if(tip === "sat"){
+
+    if(duzina <= 10){
+      cijena = sati * 4;
+    }else{
+      cijena = sati * 7;
+    }
+
+  }else{
+
+    if(vrsta === "brod"){
+      cijena = duzina * 3;
+    }else{
+      cijena = duzina * 4.5;
+    }
+
+  }
+
+  return cijena;
+
+}
+
+// OPIS
+
+function tekstBroda(){
+
+  const vrsta = document.getElementById("vrsta").value;
+  const duzina = document.getElementById("duzina").value;
+
+  if(vrsta === "katamaran"){
+    return `KATAMARAN DO ${duzina}M`;
+  }
+
+  return `BROD DO ${duzina}M`;
+
+}
+
+// VRIJEDI DO
+
+function vrijediDo(){
+
+  const tip = document.getElementById("tipNaplate").value;
+
+  const now = new Date();
+
+  let target = new Date();
+
+  if(tip === "noc"){
+
+    target.setDate(now.getDate()+1);
+    target.setHours(12,0,0);
+
+  }else{
+
+    const sati = parseInt(document.getElementById("sati").value || "0");
+
+    target = new Date(now.getTime() + sati * 60 * 60 * 1000);
+
+  }
+
+  const p = n => n.toString().padStart(2,"0");
+
+  return{
+    vrijeme:`${p(target.getHours())}:${p(target.getMinutes())}:${p(target.getSeconds())}`,
+    datum:`${p(target.getDate())}.${p(target.getMonth()+1)}.${target.getFullYear()}.`
+  };
+
+}
+
+// SAKRIJ SATE ZA NOĆNU
+
+document.getElementById("tipNaplate").addEventListener("change",function(){
+
+  const sati = document.getElementById("sati");
+
+  if(this.value === "noc"){
+    sati.style.display = "none";
+  }else{
+    sati.style.display = "block";
+  }
+
+});
+
+// DISABLE QR FIELDS
+
+document.getElementById("useNewQR").addEventListener("change",function(){
+
+  const disabled = !this.checked;
+
+  document.getElementById("zki").disabled = disabled;
+  document.getElementById("jir").disabled = disabled;
+  document.getElementById("qr").disabled = disabled;
+
+});
+
+// GENERIRANJE
+
+function generateZPL(){
+
+  const ime = document.getElementById("ime").value;
+
+  const ukupnoBroj = izracunajCijenu();
+
+  const ukupno = ukupnoBroj.toFixed(2).replace(".",",");
+
+  const pdvData = calcPDV(ukupnoBroj);
+
+  const vrijedi = vrijediDo();
+
+  const opis = tekstBroda();
+
+  const time = nowFormat();
+
+  const useNew = document.getElementById("useNewQR").checked;
+
+  const zki = getStoredOrNew("zki","last_zki",useNew);
+
+  const jir = getStoredOrNew("jir","last_jir",useNew);
+
+  const qr = getStoredOrNew("qr","last_qr",useNew);
+
+const zpl = `
+^XA
+^PW380
+^LL1320
+^CI28
+
+^CF0,18
+^FO20,40^FDGRADSKO PODUZECE d.o.o.^FS
+^FO20,62^FDObala J.I.Cote 10^FS
+^FO20,84^FDOIB:17036495780^FS
+
+^CF0,26
+^FO20,135^FDRačun broj:^FS
+
+^CF0,32
+^FO20,168^FD151/TIJASNICA/1^FS
+
+^CF0,24
+^FO20,225^FDZA:^FS
+
+^CF0,54
+^FO20,270^FB320,1,0,R^FD${ime}^FS
+
+^CF0,26
+^FO20,345^FD${opis}^FS
+
+^CF0,24
+^FO20,390^FDVRIJEDI DO:^FS
+
+^CF0,50
+^FO20,430^FB320,1,0,R^FD${vrijedi.vrijeme}^FS
+
+^FO20,485^FB320,1,0,R^FD${vrijedi.datum}^FS
+
+^CF0,34
+^FO20,570^FDUKUPNO^FS
+
+^FO170,570^FB170,1,0,R^FD${ukupno} EUR^FS
+
+^FO20,620^GB340,2,2^FS
+
+^CF0,22
+^FO20,670^FDOSNOVICA^FS
+^FO220,670^FB100,1,0,R^FD${pdvData.osnovica}^FS
+
+^FO20,705^FDPDV (25,00%)^FS
+^FO220,705^FB100,1,0,R^FD${pdvData.pdv}^FS
+
+^CF0,24
+^FO20,775^FDNAČIN PLAĆANJA: NOVČANICE^FS
+
+^CF0,20
+^FO20,850^FDNaplatičar: 8^FS
+
+^FO20,880^FD${time}^FS
+
+^CF0,28
+^FO20,960^FDZKI:^FS
+
+^CF0,20
+^FO20,995^FD${zki}^FS
+
+^CF0,28
+^FO20,1065^FDJIR:^FS
+
+^CF0,20
+^FO20,1100^FD${jir}^FS
+
+^FO85,1140^BQN,2,7
+^FDLA,${qr}^FS
+
+^XZ
+`;
+
+  const blob = new Blob([zpl], {type:"text/plain"});
+
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+
+  a.download = "racun.zpl";
+
+  a.click();
+
+}
+
+</script>
+
+</body>
+</html>
